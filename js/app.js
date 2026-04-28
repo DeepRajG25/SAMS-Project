@@ -687,8 +687,7 @@ function submitFeedback() {
     return;
   }
 
-  const entry = {
-    id: fbSubmissions.length + 1,
+  const feedbackData = {
     rating: fbRating,
     category: fbCat || 'General',
     mood: fbMood,
@@ -696,53 +695,70 @@ function submitFeedback() {
     name: document.getElementById('fb-name').value.trim() || 'Anonymous',
     email: document.getElementById('fb-email').value.trim(),
     build: fbBuildAttached ? {...SEL} : null,
-    time: new Date().toLocaleString(),
   };
-  fbSubmissions.push(entry);
 
-  // Show thank you
-  document.getElementById('fb-step1').style.display = 'none';
-  document.getElementById('fb-step2').style.display = 'block';
+  // Send to backend
+  fetch('/api/feedback', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(feedbackData),
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.message === 'Feedback sent successfully.') {
+      // Show thank you
+      document.getElementById('fb-step1').style.display = 'none';
+      document.getElementById('fb-step2').style.display = 'block';
 
-  const thanksIcons = ['🎉','🙌','💜','🚀','⭐'];
-  document.getElementById('fb-thanks-icon').textContent = fbRating >= 4 ? '🎉' : fbRating >= 3 ? '🙏' : '💜';
+      const thanksIcons = ['🎉','🙌','💜','🚀','⭐'];
+      document.getElementById('fb-thanks-icon').textContent = fbRating >= 4 ? '🎉' : fbRating >= 3 ? '🙏' : '💜';
 
-  const thanksMsg = fbRating >= 4
-    ? 'Amazing! Your kind words motivate us to build even better tools.'
-    : fbRating >= 3
-    ? 'Thanks! We\'ll use your input to improve the experience.'
-    : 'Thank you for being honest. We\'ll work on addressing your concerns.';
-  document.getElementById('fb-thanks-msg').textContent = thanksMsg;
+      const thanksMsg = fbRating >= 4
+        ? 'Amazing! Your kind words motivate us to build even better tools.'
+        : fbRating >= 3
+        ? 'Thanks! We\'ll use your input to improve the experience.'
+        : 'Thank you for being honest. We\'ll work on addressing your concerns.';
+      document.getElementById('fb-thanks-msg').textContent = thanksMsg;
 
-  // Summary box
-  const stars = fbRating > 0 ? '★'.repeat(fbRating) + '☆'.repeat(5-fbRating) : '—';
-  document.getElementById('fb-summary-box').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:6px;font-size:0.72rem;font-family:'Share Tech Mono',monospace;">
-      <div style="display:flex;justify-content:space-between;">
-        <span style="color:var(--muted);">RATING</span>
-        <span style="color:var(--amber);letter-spacing:0.05em;">${stars}</span>
-      </div>
-      ${fbCat ? `<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">CATEGORY</span><span>${fbCat}</span></div>` : ''}
-      ${fbMood ? `<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">MOOD</span><span>${fbMood}</span></div>` : ''}
-      <div style="border-top:1px solid var(--border);padding-top:6px;color:rgba(212,219,232,0.5);line-height:1.5;">"${msg.slice(0,100)}${msg.length>100?'…':''}"</div>
-    </div>`;
+      // Summary box
+      const stars = fbRating > 0 ? '★'.repeat(fbRating) + '☆'.repeat(5-fbRating) : '—';
+      document.getElementById('fb-summary-box').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:0.72rem;font-family:'Share Tech Mono',monospace;">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:var(--muted);">RATING</span>
+            <span style="color:var(--amber);letter-spacing:0.05em;">${stars}</span>
+          </div>
+          ${fbCat ? `<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">CATEGORY</span><span>${fbCat}</span></div>` : ''}
+          ${fbMood ? `<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">MOOD</span><span>${fbMood}</span></div>` : ''}
+          <div style="border-top:1px solid var(--border);padding-top:6px;color:rgba(212,219,232,0.5);line-height:1.5;">"${msg.slice(0,100)}${msg.length>100?'…':''}"</div>
+        </div>`;
 
-  // Add to build log
-  const log = document.getElementById('build-log');
-  const placeholder = log.querySelector('[style*="text-align:center"]');
-  if (placeholder) placeholder.remove();
-  const now = new Date();
-  const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-  log.insertAdjacentHTML('afterbegin', `<div class="log-entry">
-    <span class="log-time">${ts}</span>
-    <span class="log-icon">💬</span>
-    <div class="log-text">
-      <strong style="color:var(--purple)">Feedback submitted</strong>
-      <div class="log-sub">${fbCat || 'General'} · ${fbRating > 0 ? fbRating+'/5 stars' : 'No rating'}</div>
-    </div>
-  </div>`);
+      // Add to build log
+      const log = document.getElementById('build-log');
+      const placeholder = log.querySelector('[style*="text-align:center"]');
+      if (placeholder) placeholder.remove();
+      const now = new Date();
+      const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      log.insertAdjacentHTML('afterbegin', `<div class="log-entry">
+        <span class="log-time">${ts}</span>
+        <span class="log-icon">💬</span>
+        <div class="log-text">
+          <strong style="color:var(--purple)">Feedback submitted</strong>
+          <div class="log-sub">${fbCat || 'General'} · ${fbRating > 0 ? fbRating+'/5 stars' : 'No rating'}</div>
+        </div>
+      </div>`);
 
-  showToast('💬 Feedback submitted — thank you!');
+      showToast('💬 Feedback submitted — thank you!');
+    } else {
+      showToast('❌ Failed to send feedback. Please try again.');
+    }
+  })
+  .catch(error => {
+    console.error('Error sending feedback:', error);
+    showToast('❌ Error sending feedback. Check console for details.');
+  });
 }
 
 // ─── MOBILE FLOATING PHONE WIDGET ────────────────────────────

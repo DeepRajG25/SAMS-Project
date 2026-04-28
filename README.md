@@ -99,9 +99,10 @@ The backend listens on `http://localhost:3000` by default.
 
 ### What the backend does
 
-- saves build selections in MySQL
-- creates the `sams_db` database and `builds` table automatically
-- returns an acknowledgement message when the build is saved
+- saves build selections in MySQL (optional - if DB not available, build saving is disabled)
+- creates the `sams_db` database and `builds` table automatically (if DB available)
+- sends user feedback via email to the owner's Gmail (works without DB)
+- returns an acknowledgement message when the build is saved (if DB available)
 
 ### Frontend behavior
 
@@ -110,7 +111,30 @@ When the user clicks `SAVE BUILD`, the app now:
 - validates that all 6 components are selected
 - sends the build data to `/api/builds`
 - shows a confirmation toast plus a browser acknowledgement popup
-- stores the build in the MySQL database
+- stores the build in the MySQL database (if available)
+
+When the user submits feedback:
+
+- sends feedback data to `/api/feedback`
+- backend formats and emails the feedback to the configured Gmail address
+- shows thank you message
+- works even without MySQL database
+
+### Email Configuration
+
+To enable feedback emails:
+
+1. Create a Gmail app password (if using 2FA): https://support.google.com/accounts/answer/185833
+
+2. Update `backend/.env`:
+
+```env
+EMAIL_USER=your-gmail@gmail.com
+EMAIL_PASS=your-app-password
+EMAIL_TO=your-gmail@gmail.com  # or another email
+```
+
+The feedback email includes rating, category, mood, message, and optionally the attached build.
 
 ---
 
